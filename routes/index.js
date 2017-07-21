@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var config = require('config');
-var secrets = config.get('foursquareApi.secrets');
+var secrets = config.get('foursquare');
 var foursquare = require('node-foursquare')(secrets);
 
 /* GET home page. */
@@ -14,7 +14,7 @@ router.get('/login', function(req, res) {
 	res.end();
 });
 
-app.get('/callback', function (req, res) {
+router.get('/callback', function (req, res) {
 	foursquare.getAccessToken({
     		code: req.query.code
   	}, function (error, accessToken) {
