@@ -10,15 +10,33 @@ router.get('/', function (req, res) {
 });
 
 router.get('/login', function (req, res) {
-    foursquare.login(req, res);
+    res.writeHead(303, {'location': foursquare.getAuthClientRedirectUrl()});
+    res.end();
 });
 
 router.get('/callback', function (req, res) {
-    foursquare.callback(req, res);
+    foursquare.callback(req.query.code, function (error) {
+        if (error) {
+            res.send('An error was thrown: ' + error.message);
+        }
+        else {
+            processSuccessfulCallback(function () {
+                res.redirect('/users');
+            });
+        }
+    });
+
+    var processSuccessfulCallback = function (callback) {
+        foursquare.getSelf(function (error, result) {
+            foursquare.insertUser(result.user, function (user) {
+                callback();
+            });
+        });
+    };
 });
 
-router.get('/users/:id', function (req, res) {
-    foursquare.getRecentCheckins(req.params.id, res.user, function (err, response) {
+router.get('/self/checkins', function (req, res) {
+    foursquare.getRecentCheckins('self', res.user, function (err, response) {
         if (err) {
             res.status(Number(err.message.substr(0, 3)));
             res.send(err.message);
