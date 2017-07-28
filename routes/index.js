@@ -1,8 +1,8 @@
-var express = require('express');
-var router = express.Router();
-var config = require('config');
-var secrets = config.get('foursquare');
-var foursquare = require('node-foursquare')(secrets);
+const express = require('express');
+const router = express.Router();
+const config = require('config');
+const secrets = config.get('foursquare');
+const foursquare = require('node-foursquare')(secrets);
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
