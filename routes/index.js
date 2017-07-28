@@ -18,7 +18,7 @@ router.get('/callback', function (req, res) {
 });
 
 router.get('/users/self', function (req, res) {
-    foursquare.getSelf(req, res);
+    foursquare.getRecentCheckins(req, res);
 });
 
 module.exports = router;
