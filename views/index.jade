@@ -1,5 +1,10 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+    h1 Welcome
+    if user
+        p Welcome, #{user.firstName} #{user.lastName}. Please access #[a(href="/users/"+user.id) your profile].
+        br
+        p You can also view a list of #[a(href="/users") all current users].
+    else
+        p Please #[a(href="/login") Login] to access your profile.

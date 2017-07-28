@@ -2,13 +2,9 @@ function FoursquareApp() {
     const config = require('config');
     const secrets = config.get('foursquare');
     const foursquare = require('node-foursquare')(secrets);
-    const MongoClient = require('mongodb').MongoClient;
-
-
-
-    var url = 'mongodb://localhost:3000/database';
 
     var token;
+    var users = [];
 
     this.login = function (req, res) {
         res.writeHead(303, {'location': foursquare.getAuthClientRedirectUrl()});
@@ -25,58 +21,63 @@ function FoursquareApp() {
             else {
                 // Save the accessToken and redirect.
                 token = accessToken;
-                getSelf(req, res);
-                // res.redirect('/users/self');
+                getSelf(req, res, function (user) {
+                    res.redirect('/users');
+                });
             }
         });
     };
 
-     var getSelf = function (req, res) {
+    var getSelf = function (req, res, callback) {
         foursquare.Users.getUser('self', token, function (err, jsonResponse) {
             if (err) {
-                console.log("ERROR");
-            }
-            else {
-                console.log("Adding user: " + jsonResponse);
-                MongoClient.connect(url, function (err, db) {
-                    if (err) {
-                        console.log(err);
-                    }
-                    else {
-                        insertUser(db, jsonResponse, function (result) {
-                            db.close();
-                        });
-                    }
-                });
-                res.json(jsonResponse);
-            }
-        });
-
-        var insertUser = function (db, json, callback) {
-            var collection = db.collection('users');
-            var user = {
-                'user' : {
-                    'id': json.user.id,
-                    'firstName' : json.user.firstName,
-                    'lastName' : json.user.lastName
-                }
-            };
-            collection.insertOne(user, function (err, result) {
-                callback(result);
-            });
-        }
-    };
-
-    this.getRecentCheckins = function (req, res) {
-        foursquare.Users.getCheckins('self', null, token, function (err, jsonResponse) {
-            if (err) {
+                console.log("ERROR: " + err);
                 res.status(Number(err.message.substr(0, 3)));
                 res.send(err.message);
             }
             else {
-                res.json(jsonResponse);
+                insertUser(jsonResponse, function (user) {
+                    callback(user);
+                });
             }
         });
+
+        var insertUser = function (json, callback) {
+            var user = {
+                'id': json.user.id,
+                'firstName': json.user.firstName,
+                'lastName': json.user.lastName
+            };
+            if (!userExists(user)) {
+                users.push(user);
+                console.log("Added user" + user);
+            }
+            callback(user);
+        };
+
+        var userExists = function (user) {
+            for (var i = 0; i < users.length; ++i) {
+                if (users[i].id === user.id) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    };
+
+    this.getRecentCheckins = function (id, user, callback) {
+        foursquare.Users.getCheckins('self', null, token, function (err, jsonResponse) {
+            if (err) {
+                callback(err, null);
+            }
+            else {
+                callback(null, jsonResponse);
+            }
+        });
+    };
+
+    this.getUsers = function (callback) {
+        callback(users);
     };
 }
 
