@@ -29,8 +29,12 @@ function FoursquareApp() {
         var currentUser = {
             'id': user.id,
             'firstName': user.firstName,
-            'lastName': user.lastName
+            'lastName': user.lastName,
+            'checkins': [
+
+            ]
         };
+
         if (!userExists(currentUser)) {
             users.push(currentUser);
             console.log("Added user" + currentUser);
@@ -38,13 +42,40 @@ function FoursquareApp() {
         callback(currentUser);
     };
 
-    var userExists = function (user) {
-        for (var i = 0; i < users.length; ++i) {
-            if (users[i].id === user.id) {
-                return true;
+    this.addCheckinsToUser = function (user, json, callback) {
+        var index = getUserIndex(user);
+        if (index !== -1)
+        {
+            var allCheckins = json.checkins.items;
+            for (var i = 0; i < allCheckins.length; ++i) {
+                var checkin = allCheckins[i];
+                var localCheckin = {
+                    "id": checkin.id,
+                    "datetime": checkin.createdAt,
+                    "venue": checkin.venue.name,
+                    "source": checkin.source.name
+                };
+                users[index].checkins.push(localCheckin);
             }
         }
-        return false;
+        else
+        {
+            console.log("Well crap.");
+            callback()
+        }
+    };
+
+    var userExists = function (user) {
+        return getUserIndex(user) >= 0;
+    };
+
+    var getUserIndex = function (user) {
+        for (var i = 0; i < users.length; ++i) {
+            if (users[i].id === user.id) {
+                return i;
+            }
+        }
+        return -1;
     };
 
     this.getSelf = function (callback) {
@@ -53,7 +84,7 @@ function FoursquareApp() {
         });
     };
 
-    this.getRecentCheckins = function (id, user, callback) {
+    this.getRecentCheckins = function (callback) {
         foursquare.Users.getCheckins('self', null, token, function (error, jsonResponse) {
             callback(error, jsonResponse);
         });

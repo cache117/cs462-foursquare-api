@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-var FoursquareApp = require('../FoursquareApp');
-
-var foursquare = new FoursquareApp();
+const FoursquareApp = require('../FoursquareApp');
+const foursquare = new FoursquareApp();
 
 /* GET home page. */
 router.get('/', function (req, res) {
@@ -29,14 +28,16 @@ router.get('/callback', function (req, res) {
     var processSuccessfulCallback = function (callback) {
         foursquare.getSelf(function (error, result) {
             foursquare.insertUser(result.user, function (user) {
-                callback();
+                foursquare.getRecentCheckins(function (error, jsonResponse) {
+                    foursquare.addCheckinsToUser(user, jsonResponse, callback());
+                });
             });
         });
     };
 });
 
-router.get('/self/checkins', function (req, res) {
-    foursquare.getRecentCheckins('self', res.user, function (err, response) {
+router.get('/me/checkins', function (req, res) {
+    foursquare.getRecentCheckins(function (err, response) {
         if (err) {
             res.status(Number(err.message.substr(0, 3)));
             res.send(err.message);
