@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const config = require('config');
-const secrets = config.get('foursquare');
-const foursquare = require('node-foursquare')(secrets);
+var FoursquareApp = require('../FoursquareApp');
+
+var foursquare = new FoursquareApp();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -10,21 +10,15 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/login', function(req, res) {
-	res.writeHead(303, { 'location': foursquare.getAuthClientRedirectUrl() });
-	res.end();
+    foursquare.login(req, res);
 });
 
 router.get('/callback', function (req, res) {
-	foursquare.getAccessToken({
-    		code: req.query.code
-  	}, function (error, accessToken) {
-    		if(error) {
-      			res.send('An error was thrown: ' + error.message);
-    		}
-    		else {
-      			// Save the accessToken and redirect.
-    		}
-  	});
+    foursquare.callback(req, res);
+});
+
+router.get('/users/self', function (req, res) {
+    foursquare.getSelf(req, res);
 });
 
 module.exports = router;
