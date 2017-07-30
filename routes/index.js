@@ -65,13 +65,11 @@ router.get('/logout', function (req, res) {
 
 router.get('/users/:userId', function (req, res) {
     session = req.session;
-    foursquare.getSelf(function (error, json) {
-        //Retrieving for another person/not logged in, or for self.
-        var self = !(error || json.user.id !== req.params.userId);
-        var userCheckins = foursquare.getCheckinsForUser(req.params.userId);
+    //Retrieving for another person/not logged in, or for self.
+    var self = (('undefined' !== typeof session.user) && !(session.user.id !== req.params.userId));
+    var userCheckins = foursquare.getCheckinsForUser(req.params.userId);
 
-        res.render('checkins', {'checkins': userCheckins, 'isSelf': self.toString(), 'title': "Checkins"});
-    });
+    res.render('checkins', {'checkins': userCheckins, 'isSelf': self.toString(), 'title': "Checkins"});
 });
 
 module.exports = router;

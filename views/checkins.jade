@@ -3,14 +3,14 @@ extends layout
 block content
     if isSelf === "true"
         h1 Your Recent Checkins
-    else
-        h1 Most Recent Checkin Venue
-    ul
-        each checkin in checkins
-            li
-                b Venue: #{checkin.venue}
-            if isSelf === "true"
+        ul
+            each checkin in checkins
+                li
+                    b Venue: #{checkin.venue}
                 ul
                     li Checkin ID: #{checkin.id}
                     li Checkin Source: #{checkin.source}
                     li Date Time: #{checkin.datetime}
+    else
+        h1 Most Recent Checkin Venue
+        b Venue: #{checkins[0].venue}
