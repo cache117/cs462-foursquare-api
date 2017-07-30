@@ -3,23 +3,29 @@ const router = express.Router();
 const FoursquareApp = require('../FoursquareApp');
 const foursquare = new FoursquareApp();
 
+var session;
+
 /* GET home page. */
 router.get('/', function (req, res) {
-    res.render('index', {user: req.user});
+    session = req.session;
+    res.render('index', {user: session.user});
 });
 
 router.get('/login', function (req, res) {
+    session = req.session;
     res.writeHead(303, {'location': foursquare.getAuthClientRedirectUrl()});
     res.end();
 });
 
 router.get('/callback', function (req, res) {
+    session = req.session;
     foursquare.callback(req.query.code, function (error) {
         if (error) {
             res.send('An error was thrown: ' + error.message);
         }
         else {
-            processSuccessfulCallback(function () {
+            processSuccessfulCallback(function (user) {
+                session.user = user;
                 res.redirect('/users');
             });
         }
@@ -27,30 +33,44 @@ router.get('/callback', function (req, res) {
 
     var processSuccessfulCallback = function (callback) {
         foursquare.getSelf(function (error, result) {
-            foursquare.insertUser(result.user, function (user) {
-                foursquare.getRecentCheckins(function (error, jsonResponse) {
-                    foursquare.addCheckinsToUser(user, jsonResponse, callback());
-                });
-            });
+            processLoginUser(result.user, callback);
         });
     };
+
+    var processLoginUser = function (user, callback) {
+        foursquare.getRecentCheckins(function (error, jsonResponse) {
+            foursquare.insertUser(user, function (user) {
+                foursquare.addCheckinsToUser(user, jsonResponse, callback(user));
+            });
+        });
+    }
 });
 
-router.get('/me/checkins', function (req, res) {
-    foursquare.getRecentCheckins(function (err, response) {
+router.get('/users', function (req, res) {
+    session = req.session;
+    foursquare.getUsers(function (users) {
+        res.render('users', {'users': users, 'title': "Users"});
+    });
+});
+
+router.get('/logout', function (req, res) {
+    req.session.destroy(function (err) {
         if (err) {
-            res.status(Number(err.message.substr(0, 3)));
-            res.send(err.message);
-        }
-        else {
-            res.json(response);
+            console.log(err);
+        } else {
+            res.redirect('/');
         }
     });
 });
 
-router.get('/users', function (req, res) {
-    foursquare.getUsers(function (users) {
-        res.render('users', {'users': users});
+router.get('/users/:userId', function (req, res) {
+    session = req.session;
+    foursquare.getSelf(function (error, json) {
+        //Retrieving for another person/not logged in, or for self.
+        var self = !(error || json.user.id !== req.params.userId);
+        var userCheckins = foursquare.getCheckinsForUser(req.params.userId);
+
+        res.render('checkins', {'checkins': userCheckins, 'isSelf': self.toString(), 'title': "Checkins"});
     });
 });
 

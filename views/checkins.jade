@@ -1,0 +1,16 @@
+extends layout
+
+block content
+    if isSelf === "true"
+        h1 Your Recent Checkins
+    else
+        h1 Most Recent Checkin Venue
+    ul
+        each checkin in checkins
+            li
+                b Venue: #{checkin.venue}
+            if isSelf === "true"
+                ul
+                    li Checkin ID: #{checkin.id}
+                    li Checkin Source: #{checkin.source}
+                    li Date Time: #{checkin.datetime}

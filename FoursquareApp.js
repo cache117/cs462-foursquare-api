@@ -30,9 +30,7 @@ function FoursquareApp() {
             'id': user.id,
             'firstName': user.firstName,
             'lastName': user.lastName,
-            'checkins': [
-
-            ]
+            'checkins': []
         };
 
         if (!userExists(currentUser)) {
@@ -43,9 +41,8 @@ function FoursquareApp() {
     };
 
     this.addCheckinsToUser = function (user, json, callback) {
-        var index = getUserIndex(user);
-        if (index !== -1)
-        {
+        var index = getUserIndex(user.id);
+        if (index !== -1) {
             var allCheckins = json.checkins.items;
             for (var i = 0; i < allCheckins.length; ++i) {
                 var checkin = allCheckins[i];
@@ -58,20 +55,24 @@ function FoursquareApp() {
                 users[index].checkins.push(localCheckin);
             }
         }
-        else
-        {
+        else {
             console.log("Well crap.");
             callback()
         }
     };
 
-    var userExists = function (user) {
-        return getUserIndex(user) >= 0;
+    var userExists = function (userId) {
+        return getUserIndex(userId) >= 0;
     };
 
-    var getUserIndex = function (user) {
+    /**
+     * Gets the index of the user.
+     * @param userId the id of the user to check.
+     * @returns {number} the index of the user, or -1 if not found.
+     */
+    var getUserIndex = function (userId) {
         for (var i = 0; i < users.length; ++i) {
-            if (users[i].id === user.id) {
+            if (users[i].id === userId) {
                 return i;
             }
         }
@@ -88,6 +89,13 @@ function FoursquareApp() {
         foursquare.Users.getCheckins('self', null, token, function (error, jsonResponse) {
             callback(error, jsonResponse);
         });
+    };
+
+    this.getCheckinsForUser = function (userId) {
+        var index = getUserIndex(userId);
+        if (index !== -1) {
+            return users[index].checkins;
+        }
     };
 
     this.getUsers = function (callback) {
